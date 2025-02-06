@@ -2,8 +2,7 @@ name: Send to Discord Webhook
 
 on:
   schedule:
-    # Trigger at 12pm every day in AEST (UTC+10)
-    - cron: '0 2 * * *'  # 12:00 PM AEST is 2:00 AM UTC
+    - cron: '*/30 * * * *'  # Runs every 30 minutes
   workflow_dispatch:
 
 jobs:
@@ -16,8 +15,14 @@ jobs:
       - name: Read file, extract first word, and update file
         id: file_operations
         run: |
-          # Set the file path (replace with your file path)
+          # Set the file path
           FILE_PATH="Hamiltion.txt"
+
+          # Ensure the file is not empty before processing
+          if [[ ! -s "$FILE_PATH" ]]; then
+            echo "File is empty. Exiting."
+            exit 0
+          fi
           
           # Read the first word and remove it from the file
           FIRST_WORD=$(head -n 1 $FILE_PATH | awk '{print $1}')
@@ -25,7 +30,6 @@ jobs:
           # Send first word to Discord webhook
           echo "First word: $FIRST_WORD"
           
-          # Send the first word to Discord webhook
           curl -X POST -H "Content-Type: application/json" \
             -d "{\"content\": \"$FIRST_WORD\"}" \
             ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -35,9 +39,15 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          # Commit the changes to the repository after modifying the file
+          # Configure Git
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add Hamiltion.txt
-          git commit -m "Removed first word from the file"
-          git push
+
+          # Check if the file has changed
+          if [[ -n $(git status --porcelain) ]]; then
+            git add Hamiltion.txt
+            git commit -m "Removed first word from Hamiltion.txt"
+            git push
+          else
+            echo "No changes to commit."
+          fi
