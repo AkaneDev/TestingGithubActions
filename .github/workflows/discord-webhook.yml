@@ -12,10 +12,34 @@ jobs:
   send-discord:
     runs-on: ubuntu-latest
     steps:
-      - name: Send message to Discord Webhook
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Read file, extract first word, and update file
+        id: file_operations
         run: |
+          # Set the file path (replace with your file path)
+          FILE_PATH="Hamiltion.txt"
+          
+          # Read the first word and remove it from the file
+          FIRST_WORD=$(head -n 1 $FILE_PATH | awk '{print $1}')
+          
+          # Send first word to Discord webhook
+          echo "First word: $FIRST_WORD"
+          
+          # Send the first word to Discord webhook
           curl -X POST -H "Content-Type: application/json" \
-            -d '{"content": "Hello from GitHub Actions!"}' \
-            $DISCORD_WEBHOOK_URL
+            -d "{\"content\": \"$FIRST_WORD\"}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+          
+          # Remove the first word from the file
+          sed -i '1s/^[^ ]* //' $FILE_PATH
+
+      - name: Commit and push changes
+        run: |
+          # Commit the changes to the repository after modifying the file
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add Hamiltion.txt
+          git commit -m "Removed first word from the file"
+          git push
