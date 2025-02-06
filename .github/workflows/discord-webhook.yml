@@ -4,9 +4,7 @@ on:
   schedule:
     # Trigger at 12pm every day in AEST (UTC+10)
     - cron: '0 2 * * *'  # 12:00 PM AEST is 2:00 AM UTC
-  push:
-    branches:
-      - manual  # Trigger on push to 'manual' branch
+  workflow_dispatch:
 
 jobs:
   send-discord:
